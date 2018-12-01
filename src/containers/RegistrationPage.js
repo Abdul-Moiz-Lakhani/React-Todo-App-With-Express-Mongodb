@@ -28,7 +28,14 @@ class RegistrationPage extends Component {
   handleOnSubmit(e) {
 
     e.preventDefault();
+    
     this.props.registerUser(this.state.name, this.state.email, this.state.pass);
+    
+    this.setState({
+      name: "",
+      email: "",
+      pass: ""
+    })
   }
 
   render() {

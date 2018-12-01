@@ -9,7 +9,8 @@ exports.sign_up_user = (req, res, next) => {
     UserModel.find({ _userEmail: req.body.email }).exec().then( user => {
         if(user.length >= 1) {
             return res.status(409).json({
-                message: "User Already Exists!"
+                message: "User Already Exists!",
+                status: false
             });
         }
         else {
@@ -24,13 +25,14 @@ exports.sign_up_user = (req, res, next) => {
                         _userName: req.body.name,
                         _userEmail: req.body.email,
                         _userPass: hash,
-                        _userTodos: []
+                        _userTodos: [],
                     });
                     registerFormData.save().then( result => {
                         console.log(result);
                         res.status(201).json({
                             message: 'User Registered Successfuly!',
-                            data: registerFormData
+                            data: registerFormData,
+                            status: true
                         })
                     }).catch( err => {
                         console.log(err)
@@ -50,13 +52,15 @@ exports.sign_in_user = (req, res, next) => {
         
         if(user.length < 1) {
             return res.status(401).json({
-                message: "Authentication Failed!"
+                message: "Authentication Failed!",
+                status: false
             });
         }
         bcrypt.compare(req.body.password, user[0]._userPass, (err, result) => {
             if(err) {
                 return res.status(401).json({
-                    message: "Authentication Failed!"
+                    message: "Authentication Failed!",
+                    status: false
                 });
             } 
             else if(result) {
@@ -66,15 +70,48 @@ exports.sign_in_user = (req, res, next) => {
                 }, process.env.JWT_KEY, {
                     expiresIn: "1h"
                 })
+
+                const data = {
+                    name: user[0]._userName,
+                    todos: user[0]._userTodos
+                }
                 
                 return res.status(200).json({
                     message: "Authentication Succussful!",
-                    token: token
+                    token: token,
+                    userData: data,
+                    status: true
                 });
             }
             return res.status(401).json({
-                message: "Authentication Failed!"
+                message: "Authentication Failed!",
+                status: false
             });
         });
+    });
+}
+
+exports.get_user = (req, res, next) => {
+        
+    UserModel.find({ _userEmail: req.userData.userEmail }).exec().then( user => {
+        if(user.length < 1) {
+            return res.status(401).json({
+                message: "Authentication Failed!",
+                status: false
+            });
+        }
+        else {
+            const data = {
+                id: user[0]._id,
+                name: user[0]._userName,
+                todos: user[0]._userTodos
+            }
+
+            return res.status(200).json({
+                message: "Authentication Succussful!",
+                userData: data,
+                status: true
+            });
+        }
     });
 }

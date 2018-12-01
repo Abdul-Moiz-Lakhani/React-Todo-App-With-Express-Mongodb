@@ -34,11 +34,13 @@ class AddWorkDiv extends Component {
   
   render() {
 
+    console.log(this.props.currentUser);
+
     return (
       <div id="addWork_div">
 
         <h3 id="greet">Hello,</h3>
-        <h2 id="greetName">{this.props.userName}</h2>
+        <h2 id="greetName">{this.props.currentUser.name}</h2>
         <h2 id="welcome">Welcome to To Do App</h2>
 
         <form onSubmit={this.handleSubmit.bind(this)}>
@@ -61,7 +63,7 @@ class AddWorkDiv extends Component {
 
 const mapStateToProps = state => {
   return {
-    userName: state.userAuthenticated.user.userName,
+    currentUser: state.userAuthenticated.user,
     userUid: state.userAuthenticated.user.userUid,
     showErrorStatus: state.showError.status,
     errorMessage: state.showError.errorMessage,

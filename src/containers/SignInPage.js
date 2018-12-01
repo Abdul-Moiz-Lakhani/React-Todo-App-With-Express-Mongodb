@@ -28,6 +28,11 @@ class SignInPage extends Component {
     e.preventDefault();
 
     this.props.signInUser(this.state.email, this.state.pass);
+
+    this.setState({
+      email: '',
+      pass: ''
+    })
   }
 
   componentWillReceiveProps(nextProps) {

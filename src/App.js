@@ -9,10 +9,12 @@ import SignInPage from './containers/SignInPage';
 import AddWorkDiv from './containers/AddWorkDiv';
 import TodoList from './containers/todoList';
 import Header from './components/Header';
-import {connect} from "react-redux";
-import {userSignedIn } from "./Store/Actions/authActions"
+import { connect } from "react-redux";
+import { userSignedIn } from "./Store/Actions/authActions"
 import { firebaseApp } from './firebase';
-import {showLoader, hideLoader} from "./Store/Actions/showLoader";
+import { showLoader, hideLoader } from "./Store/Actions/showLoader";
+import { showError, hideError } from "./Store/Actions/showError";
+import { showCongrats, hideCongrats } from "./Store/Actions/showCongrats";
 import { clearTodos, updateTodos } from './Store/Actions/todos';
 
 const HomePageRoute = ({ component: Component, isAuthenticated, ...rest }) => (
@@ -83,9 +85,9 @@ const TodoListRoute = ({ component: Component, isAuthenticated, ...rest }) => (
 class App extends Component {
 
   componentWillUpdate() {
-    
+
     let that = this;
-    
+
     firebaseApp.database().ref(`/Users/${this.props.currentUser.userUid}`).on("child_removed", snap => {
       that.props.clearTodos()
     })
@@ -93,39 +95,63 @@ class App extends Component {
 
   componentDidMount() {
 
-    let that = this;
-    
-    firebaseApp.auth().onAuthStateChanged(user => {
-      if(user) {
-        
-        that.props.showLoader();
-        
-        firebaseApp.database().ref(`/Users/${user.uid}`).on("value", userData => {
-          
-          let currentUser = userData.val();
-          
-          that.props.userSignedIn(currentUser);
+    const token = localStorage.getItem('auth_token');
 
-          firebaseApp.database().ref(`/Users/${user.uid}/todos`).once("value", todos => {
-            
-            let arr = [];
+    this.props.showLoader();
 
-            todos.forEach(todo => {
-              let thisTodo = todo.val()
-              thisTodo.uID = todo.key
-              arr.push(thisTodo);
-              that.props.updateTodos(arr)
-            })
-            
-            that.props.hideLoader();
-          })
+    if (token) {
+      try {
+        let getuser = async () => {
+          let response = await fetch('http://localhost:3000/user/getuser', {
+            method: "GET",
+            headers: {
+              'Content-type': 'application/json',
+              'authorization': 'Bearer ' + token
+            }
+          });
+
+          let data = await response.json();
+
+          return data;
+        }
+
+        getuser().then(result => {
+
+          if (result.status) {
+            this.props.userSignedIn(result.userData);
+            this.props.showCongrats(result.message)
+            setTimeout(() => {
+              this.props.hideCongrats();
+            }, 3000)
+          } else {
+            this.props.showError(result.message);
+            setTimeout(() => {
+              this.props.hideError();
+            }, 3000)
+          }
+
+          this.props.hideLoader();
+        }).catch(err => {
+          this.props.showError('Authentication Failed!');
+          
+          setTimeout(() => {
+            this.props.hideError();
+          }, 3000)
         })
+        
+        this.props.hideLoader();
       }
-      else
-      {
-        console.log('user signed out')
+      catch (err) {
+        
+        this.props.showError('Authentication Failed!');
+        
+        setTimeout(() => {
+          this.props.hideError();
+        }, 3000)
+
+        this.props.hideLoader();
       }
-    })
+    }
   }
 
   render() {
@@ -185,6 +211,18 @@ const mapDispatchToProps = dispatch => {
     },
     hideLoader: () => {
       dispatch(hideLoader())
+    },
+    showError: (err) => {
+      dispatch(showError(err))
+    },
+    hideError: () => {
+      dispatch(hideError())
+    },
+    showCongrats: (err) => {
+      dispatch(showCongrats(err))
+    },
+    hideCongrats: () => {
+      dispatch(hideCongrats())
     },
     clearTodos: () => {
       dispatch(clearTodos())
