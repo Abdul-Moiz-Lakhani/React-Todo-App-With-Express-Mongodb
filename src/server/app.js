@@ -8,14 +8,12 @@ mongoose.connect('mongodb://amlakhani:' + process.env.MONGO_ATLAS_PW + '@test-cl
     useNewUrlParser: true
 })
 
-const registerRoute = require('./routes/registerRoute');
-const signinRoute = require('./routes/signinRoute');
+const userRoute = require('./routes/user');
 
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
 
-app.use('/register', registerRoute);
-app.use('/signin', signinRoute);
+app.use('/user', userRoute);
 
 app.use((req, res, next)=>{
     res.header('Access-Control-Allow-Origin', '*');
